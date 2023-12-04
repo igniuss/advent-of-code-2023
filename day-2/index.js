@@ -1,62 +1,43 @@
-const fs = require('fs');
-const readline = require('readline');
+const { input } = require('./input');
 
-const file = readline.createInterface({
-    input: fs.createReadStream('./day-2/data.txt'),
-    output: process.stdout,
-    terminal: false
-});
-
-let total = 0;
-file.on('line', (line) => {
-    let split = line.split(':');
-    let index = Number.parseInt(split[0].substring("Game ".length));
-    let games = split[1].split(";")
-    let invalid = games.some(invalidGame);
-    
-    if(invalid == false) { 
-        total += index 
-        console.log(`${line} is possible! ${invalid}`)
-    }
-    // console.log(games);
-});
-
-
-file.on('close', () => {
-    console.log(total);
-})
-
-const Colors = {
-    red: 0,
-    green: 1,
-    blue: 2,
-}
-
-// R, G, B
-const Limits = [12, 13, 14]
-
-/**
- * 
- * @param {String} str 
- * @returns {Boolean} invalid
- */
-
-
-function invalidGame(str) {
-    // data is formatted as 3 blue, 2 red, 8 green
-    let split = str.split(', ');
-    let invalid = Object.keys(Colors).some(color => {
-        return split.some(element => {
-            let index = element.indexOf(color);
-            if( index != -1) {
-                let number = Number.parseInt(element.substring(0, index - 1).trim());
-                if(Limits[Colors[color]] < number) {
-                    return true;
-                }
-            }
-            return false;
+function parse(input) {
+    return input.map((line) => {
+        const regex = /Game (\d+): (.+)$/gm;
+        const [, id, rest] = regex.exec(line);
+        const picks = rest.split(/[;,] /);
+        
+        const selection = picks.map((pick) => {
+            let [, num, color] = /(\d+) (\w+)/.exec(pick);
+            return [parseInt(num), color];
         });
-    })
-    console.log(invalid);
-    return invalid;
+
+        return {
+            id: parseInt(id),
+            max: selection.reduce(
+                (acc, [num, color]) => {
+                    acc[color] = Math.max(acc[color], num);
+                    return acc;
+                },
+                { red: 0, green: 0, blue: 0 }
+            ),
+        };
+    });
 }
+
+const games = parse(input);
+
+let solution = 0;
+for (let { id, max } of games) {
+    if (max.red <= 12 && max.green <= 13 && max.blue <= 14) {
+        solution += id;
+    }
+}
+
+console.log(solution);
+
+let solution_2 = 0;
+for (let { _, max } of games) {
+	solution_2 += max.red * max.blue * max.green;
+}
+
+console.log(solution_2);
